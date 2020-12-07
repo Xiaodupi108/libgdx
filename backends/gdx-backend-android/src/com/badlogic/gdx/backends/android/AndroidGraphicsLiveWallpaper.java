@@ -17,12 +17,17 @@
 
 package com.badlogic.gdx.backends.android;
 
+import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.EGLConfigChooser;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.View;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.surfaceview.GLSurfaceView20;
 import com.badlogic.gdx.backends.android.surfaceview.ResolutionStrategy;
+import com.badlogic.gdx.backends.android.textureview.GLTextureView;
+import com.badlogic.gdx.backends.android.textureview.GLTextureView20;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
 /** A subclass of {@link AndroidGraphics} specialized for live wallpaper applications.
@@ -52,23 +57,40 @@ public final class AndroidGraphicsLiveWallpaper extends AndroidGraphics {
 	// Grabbed from AndroidGraphics superclass and modified to override
 	// getHolder in created GLSurfaceView20 instances
 	@Override
-	protected GLSurfaceView20 createGLSurfaceView (AndroidApplicationBase application, final ResolutionStrategy resolutionStrategy) {
+	protected View createGLSurfaceView (AndroidApplicationBase application, final ResolutionStrategy resolutionStrategy) {
 		if (!checkGL20()) throw new GdxRuntimeException("Libgdx requires OpenGL ES 2.0");
 
-		EGLConfigChooser configChooser = getEglConfigChooser();
-		GLSurfaceView20 view = new GLSurfaceView20(application.getContext(), resolutionStrategy) {
-			@Override
-			public SurfaceHolder getHolder () {
-				return getSurfaceHolder();
-			}
-		};
+		if (config.useTextureView) {
+			GLTextureView.EGLConfigChooser configChooser = this.getTextureEglConfigChooser();
 
-		if (configChooser != null)
-			view.setEGLConfigChooser(configChooser);
-		else
-			view.setEGLConfigChooser(config.r, config.g, config.b, config.a, config.depth, config.stencil);
-		view.setRenderer(this);
-		return view;
+			GLTextureView view = new GLTextureView20(application.getContext(), resolutionStrategy, this.config.useGL30 ? 3 : 2);
+			if (configChooser != null) {
+				view.setEGLConfigChooser(configChooser);
+			} else {
+				view.setEGLConfigChooser(this.config.r, this.config.g, this.config.b, this.config.a, this.config.depth, this.config.stencil);
+			}
+
+			view.setOpaque(false);
+			view.setRenderer(this);
+			return view;
+
+		} else {
+
+			EGLConfigChooser configChooser = getEglConfigChooser();
+			GLSurfaceView20 view = new GLSurfaceView20(application.getContext(), resolutionStrategy) {
+				@Override
+				public SurfaceHolder getHolder() {
+					return getSurfaceHolder();
+				}
+			};
+
+			if (configChooser != null)
+				view.setEGLConfigChooser(configChooser);
+			else
+				view.setEGLConfigChooser(config.r, config.g, config.b, config.a, config.depth, config.stencil);
+			view.setRenderer(this);
+			return view;
+		}
 	}
 
 	// kill the GLThread managed by GLSurfaceView (only for GLSurfaceView because GLSurffaceViewCupcake stops thread in
@@ -77,7 +99,11 @@ public final class AndroidGraphicsLiveWallpaper extends AndroidGraphics {
 		if (view != null) {
 			try {
 				// onDetachedFromWindow stops GLThread by calling mGLThread.requestExitAndWait()
-				view.onDetachedFromWindow();
+				if (view instanceof GLSurfaceView20){
+					((GLSurfaceView20)view).onDetachedFromWindow();
+				}else if (view instanceof GLTextureView20){
+					((GLTextureView20)view).onDetachedFromWindow();
+				}
 				if (AndroidLiveWallpaperService.DEBUG)
 					Log.d(AndroidLiveWallpaperService.TAG,
 						" > AndroidLiveWallpaper - onDestroy() stopped GLThread managed by GLSurfaceView");

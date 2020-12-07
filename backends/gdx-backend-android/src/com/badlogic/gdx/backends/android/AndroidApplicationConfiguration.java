@@ -100,4 +100,6 @@ public class AndroidApplicationConfiguration {
 
 	/** The maximum number of threads to use for network requests. Default is {@link Integer#MAX_VALUE}. */
 	public int maxNetThreads = Integer.MAX_VALUE;
+
+	public boolean useTextureView = true;
 }

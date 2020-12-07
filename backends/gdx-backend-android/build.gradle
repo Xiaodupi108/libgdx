@@ -17,3 +17,14 @@
 dependencies {
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+ext {
+    // 项目名称
+    libraryArtifactId = 'gdx-backend-android'
+    // 版本描述
+    libraryDescription = 'gdx-backend-android 1.9.12.3'
+    // 版本号
+    libraryVersion = '1.9.12.3'
+}
+
+apply from: 'maven.gradle'
