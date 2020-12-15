@@ -30,6 +30,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import androidx.fragment.app.FragmentActivity;
+
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.backends.android.surfaceview.FillResolutionStrategy;
 import com.badlogic.gdx.utils.*;
@@ -39,7 +42,7 @@ import com.badlogic.gdx.utils.*;
  * configuration for the GLSurfaceView.
  * 
  * @author mzechner */
-public class AndroidApplication extends Activity implements AndroidApplicationBase {
+public class AndroidApplication extends FragmentActivity implements AndroidApplicationBase {
 	static {
 		GdxNativesLoader.load();
 	}
