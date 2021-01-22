@@ -20,6 +20,7 @@ import java.awt.Canvas;
 import java.awt.Toolkit;
 import java.nio.ByteBuffer;
 
+import com.badlogic.gdx.AbstractGraphics;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.graphics.glutils.GLVersion;
 import org.lwjgl.LWJGLException;
@@ -27,11 +28,11 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.PixelFormat;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Graphics;
-import com.badlogic.gdx.graphics.Cursor;
 import com.badlogic.gdx.graphics.Cursor.SystemCursor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
@@ -44,7 +45,7 @@ import com.badlogic.gdx.utils.SharedLibraryLoader;
 
 /** An implementation of the {@link Graphics} interface based on Lwjgl.
  * @author mzechner */
-public class LwjglGraphics implements Graphics {
+public class LwjglGraphics extends AbstractGraphics {
 
 	/** The suppored OpenGL extensions */
 	static Array<String> extensions;
@@ -115,10 +116,6 @@ public class LwjglGraphics implements Graphics {
 	}
 
 	public float getDeltaTime () {
-		return deltaTime;
-	}
-
-	public float getRawDeltaTime () {
 		return deltaTime;
 	}
 
@@ -309,6 +306,22 @@ public class LwjglGraphics implements Graphics {
 			|| extensions.contains("GL_ARB_framebuffer_object", false);
 	}
 
+	/** @return whether cubemap seamless feature is supported. */
+	public static boolean supportsCubeMapSeamless () {
+		return glVersion.isVersionEqualToOrHigher(3, 2) || extensions.contains("GL_ARB_seamless_cube_map", false);
+	}
+
+	/** Enable or disable cubemap seamless feature. Default is true if supported. Should only be called if this feature is
+	 * supported. (see {@link #supportsCubeMapSeamless()})
+	 * @param enable */
+	public void enableCubeMapSeamless (boolean enable) {
+		if (enable) {
+			gl20.glEnable(GL32.GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		} else {
+			gl20.glDisable(GL32.GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		}
+	}
+
 	private void createDisplayPixelFormat (boolean useGL30, int gles30ContextMajor, int gles30ContextMinor) {
 		try {
 			if (useGL30) {
@@ -402,6 +415,10 @@ public class LwjglGraphics implements Graphics {
 		Gdx.gl = gl20;
 		Gdx.gl20 = gl20;
 		Gdx.gl30 = gl30;
+
+		if (supportsCubeMapSeamless()) {
+			enableCubeMapSeamless(true);
+		}
 	}
 
 	@Override
@@ -416,18 +433,18 @@ public class LwjglGraphics implements Graphics {
 
 	@Override
 	public float getPpcX () {
-		return (Toolkit.getDefaultToolkit().getScreenResolution() / 2.54f);
+		return getPpiX() / 2.54f;
 	}
 
 	@Override
 	public float getPpcY () {
-		return (Toolkit.getDefaultToolkit().getScreenResolution() / 2.54f);
+		return getPpiY () / 2.54f;
 	}
 
 	@Override
 	public float getDensity () {
 		if (config.overrideDensity != -1) return config.overrideDensity / 160f;
-		return (Toolkit.getDefaultToolkit().getScreenResolution() / 160f);
+		return super.getDensity();
 	}
 
 	@Override
